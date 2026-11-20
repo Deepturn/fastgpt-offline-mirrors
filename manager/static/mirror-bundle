@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+image=fastgpt-mirror-manager:1.0.0-amd64
+network=none
+if [[ $1 == build ]]; then network=bridge; fi
+exec docker run --rm --platform linux/amd64 --pull=never --network "$network" \
+  --user "$(id -u):$(id -g)" --workdir /work \
+  -v "$PWD:/work" --entrypoint python3.12 "$image" /app/bundle.py "$@"

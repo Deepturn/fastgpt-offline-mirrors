@@ -1,0 +1,54 @@
+services:
+  local-pypi:
+    image: fastgpt-local-pypi:20261027-amd64
+    container_name: fastgpt-local-pypi
+    restart: unless-stopped
+    command:
+      - run
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8081"
+      - --disable-fallback
+      - /packages
+    ports:
+      - "${MIRROR_BIND_IP:-0.0.0.0}:8081:8081"
+    volumes:
+      - ${MIRROR_ROOT:-/data/agent-mirror}/pypi/packages:/packages:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8081/simple/', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"
+
+  local-npm:
+    image: fastgpt-local-npm:20261027-amd64
+    container_name: fastgpt-local-npm
+    restart: unless-stopped
+    command:
+      - --config
+      - /verdaccio/conf/config.yaml
+      - --listen
+      - 0.0.0.0:4873
+    ports:
+      - "${MIRROR_BIND_IP:-0.0.0.0}:4873:4873"
+    volumes:
+      - ${MIRROR_ROOT:-/data/agent-mirror}/npm/storage:/verdaccio/storage:rw
+      - ${MIRROR_ROOT:-/data/agent-mirror}/npm/config.yaml:/verdaccio/conf/config.yaml:ro
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:4873/-/ping', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: 20m
+        max-file: "3"

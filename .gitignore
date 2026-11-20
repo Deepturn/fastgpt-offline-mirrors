@@ -1,0 +1,26 @@
+# Generated runtime data and offline package payloads
+delivery/
+data/
+images/
+pypi/packages/
+npm/storage/
+npm/package-lock.json
+*.tar
+*.tar.gz
+*.whl
+
+# Local configuration and generated files
+.env
+**/.env
+.env.*
+!.env.example
+secrets/
+**/secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+*.tgz
+__pycache__/
+*.py[cod]
+.DS_Store

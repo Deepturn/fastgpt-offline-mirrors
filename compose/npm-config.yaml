@@ -1,0 +1,22 @@
+storage: /verdaccio/storage
+web:
+  title: FastGPT Local NPM Mirror
+auth:
+  htpasswd:
+    file: /verdaccio/conf/htpasswd
+    max_users: -1
+uplinks: {}
+packages:
+  '@*/*':
+    access: $all
+    publish: $none
+    unpublish: $none
+  '**':
+    access: $all
+    publish: $none
+    unpublish: $none
+middlewares:
+  audit:
+    enabled: false
+log:
+  - {type: stdout, format: pretty, level: http}

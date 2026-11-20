@@ -1,0 +1,51 @@
+services:
+  local-npm:
+    command: ["--config", "/verdaccio/conf/managed.yaml", "--listen", "0.0.0.0:4873"]
+    volumes:
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/npm/managed-storage:/verdaccio/storage:rw
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/manager/secrets/htpasswd:/verdaccio/conf/htpasswd:ro
+      - ./npm-managed.yaml:/verdaccio/conf/managed.yaml:ro
+
+  mirror-admin:
+    image: ${MIRROR_ADMIN_IMAGE:-fastgpt-mirror-manager:1.0.0-amd64}
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    depends_on:
+      local-pypi: {condition: service_healthy}
+      local-npm: {condition: service_healthy}
+    environment:
+      PUBLIC_PYPI: "http://${MIRROR_BIND_IP:?set MIRROR_BIND_IP}:8081/simple"
+      PUBLIC_NPM: "http://${MIRROR_BIND_IP:?set MIRROR_BIND_IP}:4873"
+      NPM_STORAGE: /data/npm/storage
+    ports:
+      - "${MIRROR_BIND_IP:?set MIRROR_BIND_IP}:${MIRROR_ADMIN_PORT:-18082}:18082"
+    volumes:
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/manager/state:/state:rw
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/manager/secrets:/secrets:ro
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/pypi:/data/pypi:rw
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/npm/managed-storage:/data/npm/storage:ro
+    healthcheck:
+      test: ["CMD", "python3.12", "-c", "import ssl,urllib.request; urllib.request.urlopen('https://127.0.0.1:18082/health',context=ssl._create_unverified_context(),timeout=3).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  mirror-verifier:
+    image: fastgpt-mirror-manager:1.0.0-amd64
+    command: ["worker"]
+    network_mode: none
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,nosuid,nodev,size=1g,mode=1777"]
+    volumes:
+      - ${MIRROR_ROOT:?set MIRROR_ROOT}/manager/state:/state:rw
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}

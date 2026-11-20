@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本地镜像源 · FastGPT</title>
+<link rel="stylesheet" href="/style.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#workspace">跳到工作区</a>
+<aside class="rail">
+  <div class="brand"><span class="brand-icon" data-icon="layers"></span><div><strong>FastGPT</strong><span>本地镜像源</span></div></div>
+  <nav class="workspace-nav" aria-label="工作区">
+    <button type="button" data-rail-kind="all" aria-pressed="true"><span data-icon="layers"></span>依赖目录</button>
+    <button type="button" data-rail-kind="pypi" aria-pressed="false"><span data-icon="boxes"></span>PyPI</button>
+    <button type="button" data-rail-kind="npm" aria-pressed="false"><span data-icon="boxes"></span>NPM</button>
+    <button type="button" id="imports-nav" aria-pressed="false" hidden><span data-icon="upload"></span>离线包导入</button>
+  </nav>
+</aside>
+<header class="top">
+  <div class="top-inner">
+    <nav class="header-actions" aria-label="文档与管理">
+      <a class="control quiet" href="/guide.md" download><span data-icon="book"></span><span>打包指南</span></a>
+      <a class="control quiet" href="/mirror-bundle" download><span data-icon="download"></span><span>打包工具</span></a>
+      <button class="control" id="session" type="button"><span data-icon="lock"></span><span id="session-label">管理员登录</span></button>
+    </nav>
+  </div>
+</header>
+<main id="workspace" class="main">
+  <section id="catalog" aria-labelledby="catalog-title">
+    <div class="page-title"><h1 id="catalog-title">依赖目录</h1>
+      <button id="refresh" class="control square" type="button" aria-label="刷新源和目录" title="刷新源和目录"><span data-icon="refresh"></span></button>
+    </div>
+    <div id="sources" class="sources" aria-label="源状态"></div>
+    <p id="overview-status" class="message" role="status" hidden></p>
+    <div class="toolbar">
+      <label class="search"><span data-icon="search"></span><input id="filter" type="search" aria-label="搜索包名或版本" placeholder="搜索包名或版本"></label>
+      <div class="segmented" aria-label="依赖类型">
+        <button type="button" data-kind="all" aria-pressed="true">全部</button>
+        <button type="button" data-kind="pypi" aria-pressed="false"><span data-icon="boxes"></span>PyPI</button>
+        <button type="button" data-kind="npm" aria-pressed="false"><span data-icon="boxes"></span>NPM</button>
+      </div>
+      <span id="catalog-total" class="muted" aria-live="polite"></span>
+    </div>
+    <div class="table-frame">
+      <table class="inventory"><thead><tr><th scope="col">包名</th><th scope="col">来源</th><th scope="col">版本数</th><th scope="col">文件数</th></tr></thead><tbody id="packages"></tbody></table>
+      <p id="catalog-state" class="empty" role="status">正在读取目录</p>
+      <div id="pagination" class="pagination" hidden>
+        <span id="page-summary" class="muted" aria-live="polite"></span>
+        <div><button id="previous" type="button" class="control square" aria-label="上一页" title="上一页"><span data-icon="left"></span></button>
+        <button id="next" type="button" class="control square" aria-label="下一页" title="下一页"><span data-icon="right"></span></button></div>
+      </div>
+    </div>
+  </section>
+  <section id="imports" aria-labelledby="imports-title" hidden>
+    <div class="section-title"><h1 id="imports-title">离线包导入</h1></div>
+    <div id="imports-content" hidden>
+      <div class="import-grid">
+        <div class="upload-panel">
+          <h3>上传离线包</h3>
+          <form id="upload">
+            <label class="dropzone" id="dropzone">
+              <input id="file" type="file" accept=".tar.gz,.tgz,application/gzip">
+              <span data-icon="upload"></span><strong id="file-name">选择离线包</strong><span id="file-size" class="muted">.tar.gz 或 .tgz</span>
+            </label>
+            <div class="upload-actions"><button type="submit" class="control primary">上传并预检</button><progress id="upload-progress" max="100" aria-label="上传进度" hidden></progress></div>
+          </form>
+          <p id="notice" class="message" role="status" hidden></p>
+        </div>
+        <div class="history">
+          <div class="section-title"><h3>导入记录</h3><span id="job-count" class="muted"></span></div>
+          <div id="jobs"></div>
+        </div>
+      </div>
+      <section id="report" aria-labelledby="report-title" hidden>
+        <div class="section-title"><h3 id="report-title">预检与发布结果</h3><a id="download" class="control" download><span data-icon="download"></span>下载报告</a></div>
+        <div id="job-summary" class="report-summary" aria-live="polite"></div>
+        <div id="result-counts" class="report-counts"></div>
+        <pre id="error" class="error-box" hidden></pre>
+        <div id="result-table" class="table-frame" hidden><table class="results"><thead><tr><th scope="col">包名</th><th scope="col">版本</th><th scope="col">状态</th></tr></thead><tbody id="results"></tbody></table></div>
+        <div class="report-actions"><button id="publish" class="control primary" type="button" hidden>确认发布</button><button id="discard" class="control danger" type="button" hidden>丢弃待发布文件</button></div>
+      </section>
+    </div>
+  </section>
+</main>
+<dialog id="login" aria-labelledby="login-title">
+  <form id="auth">
+    <span class="login-icon" data-icon="lock"></span><h2 id="login-title">管理员登录</h2>
+    <label for="password">密码</label><input id="password" type="password" required autocomplete="current-password">
+    <p id="auth-error" class="message" role="alert" hidden></p>
+    <div class="dialog-actions"><button type="button" id="cancel" class="control quiet">取消</button><button type="submit" class="control primary">登录</button></div>
+  </form>
+</dialog>
+</body>
+</html>
